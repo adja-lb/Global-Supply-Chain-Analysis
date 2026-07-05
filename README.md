@@ -9,6 +9,7 @@
 
 ## 🏗️ Architecture du Pipeline & Flux de Données
 
+- **DataCo - Description Supply Chain** : Prodive a description of every column of the datasets
 
 ---
 
