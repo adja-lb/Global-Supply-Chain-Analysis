@@ -1,5 +1,8 @@
 # 🏗️ Global Supply Chain Analysis
 
+<img width="75%" height="75%" alt="logistique_supply_chain" src="https://github.com/user-attachments/assets/ad11cf27-a286-462d-b2c1-16b4aedb795b" />
+
+
 ## 📌 Présentation du Projet
 
 ---
