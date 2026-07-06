@@ -72,3 +72,30 @@ When we are data cleaning we usually follow a few steps
 
 ```sql
 ```
+
+
+# Tests de Staging
+models/staging/schema.yml
+```yml
+version: 2
+
+models:
+  - name: stg_dataco_supply_chain
+    description: "Table de staging nettoyée et standardisée du flux Supply Chain"
+    columns:
+      - name: customer_id
+        description: "Identifiant unique du client (peut contenir des doublons à ce stade)"
+        tests:
+          - not_null # On vérifie qu'aucun client n'a un ID manquant
+
+      - name: order_date
+        description: "Date de la commande harmonisée"
+        tests:
+          - not_null
+
+      - name: shipping_date
+        description: "Date d'expédition harmonisée"
+        tests:
+          - not_null
+```
+Si dbt renvoie PASS, cela signifie que notre étape de staging est saine (pas de dates manquantes, pas d'ID clients manquants). Si un test renvoie FAIL, il nous donnera exactement le nombre de lignes corrompues, et on saura précisément quoi corriger
