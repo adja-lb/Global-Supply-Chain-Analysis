@@ -14,6 +14,7 @@ DBeaver import data as ISO-8859-1 or Windows-1252 (not utf-8) to handle accents
 - **order date (DateOrders)** : Different Timestamp Formatting with mm/dd/yyyy, yyyy/mm/dd
 - **Order Zipcode** : Some Missing Values --> How to handle
 - **Product Description** : Only Blanks --> Remove Column
+- **Product Image** : URL link --> Remove Column
 - **Product Status** : Only 0 Values, adding no information --> Remove Column
 - **shipping date (DateOrders)** : Different Timestamp Formatting with mm/dd/yyyy, yyyy/mm/dd
 
