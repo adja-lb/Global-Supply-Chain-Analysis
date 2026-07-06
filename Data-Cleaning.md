@@ -19,7 +19,15 @@ DBeaver import data as ISO-8859-1 or Windows-1252 (not utf-8) to handle accents
 - **Product Status** : Only 0 Values, adding no information --> Remove Column
 - **shipping date (DateOrders)** : Different Timestamp Formatting with mm/dd/yyyy, yyyy/mm/dd
 
+Il y a 3 lignes d'erreur en cascade où customer city à le customer state et state le zipcode. Il faudrait décaler tout ça et mettre unknown pour la city. Logique de Réparation
 
+Pour le décalage des 3 lignes : On va utiliser un CASE WHEN en repérant ces lignes spécifiques. Si le customer_state contient en réalité un code postal (on peut le détecter avec une expression régulière qui cherche des chiffres ^[0-9]+$), alors on décale les valeurs :
+
+    La ville devient null (puisqu'elle contenait l'état, la vraie ville est perdue ➔ on mettra 'unknown' plus tard dans Power BI).
+
+    L'état prend la valeur qui était dans la ville.
+
+    Le code postal prend la valeur qui était dans l'état.
 
 
 ```sql
@@ -99,3 +107,37 @@ models:
           - not_null
 ```
 Si dbt renvoie PASS, cela signifie que notre étape de staging est saine (pas de dates manquantes, pas d'ID clients manquants). Si un test renvoie FAIL, il nous donnera exactement le nombre de lignes corrompues, et on saura précisément quoi corriger
+
+
+Étape 1 : Ta table brute respecte-t-elle la 1NF (Première Forme Normale) ?
+
+Pour valider la 1NF, un tableau doit respecter 3 règles :
+
+    L'atomicité des cellules : Chaque case ne doit contenir qu'une seule valeur (pas de listes, pas de tableaux de données dans une seule cellule).
+
+    Des colonnes uniques : Pas de colonnes dupliquées (ex: telephone_1, telephone_2).
+
+    Une clé primaire : Chaque ligne doit être identifiable de façon unique.
+
+
+tape 2 : Comment passe-t-on à la 2NF (Deuxième Forme Normale) ?
+
+Pour être en 2NF, il faut :
+
+    Être en 1NF.
+
+    S'assurer que toutes les colonnes non-clés dépendent entièrement de la clé primaire de la table, et pas seulement d'une partie de celle-ci (ce qu'on appelle éliminer les dépendances partielles).
+
+Le problème de ton dataset actuel :
+Actuellement, ton modèle de staging est un gros tableau plat "dénormalisé". Ta ligne représente "un article de commande". Si tu as une clé composite (par exemple id_commande + id_produit), le nom_du_client dépend uniquement de l'acheteur, pas du produit ! Il y a donc une dépendance partielle.
+Étape 3 : Pourquoi le Data Engineer fait-il la 2NF et la 3NF en même temps ?
+
+En théorie académique, on sépare strictement les étapes. En ingénierie de données avec dbt, le passage de la table plate (1NF) aux tables relationnelles (2NF/3NF) se fait dans le même élan au sein de ta couche Intermediate.
+
+Lorsque tu crées tes modèles intermédiaires, tu vas "éclater" ton gros tableau en plusieurs entités distinctes :
+
+    int_customers.sql (Tu isoles l'entité Client. Sa clé primaire est customer_id. Le nom, la ville et le code postal dépendent uniquement de cet ID. C'est de la 2NF/3NF pure pour le bloc client).
+
+    int_products.sql (Tu isoles l'entité Produit. L'ID produit détermine le nom et la catégorie).
+
+    int_orders.sql (Ta table de liaison/faits, qui ne conserve que les transactions, les dates, les montants, et les clés étrangères vers tes clients et produits).
