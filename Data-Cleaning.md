@@ -6,6 +6,7 @@ DBeaver import data as ISO-8859-1 or Windows-1252 (not utf-8) to handle accents
 
 ### DataCo - Supply Chain Dataset
 
+- **Customer City** : Error with CA not full name
 - **Customer Email** : Anonymized and Unsuable (e.g. XXXXXXX) --> Remove Column
 - **Customer Password** : Anonymized and Unsuable (e.g. XXXXXXX) --> Remove Column
 - <s>**Customer State** : Mainly US (CA, MI, NY) but few values with Numbers (e.g. 91732, 95758)</s>
