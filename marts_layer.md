@@ -1,4 +1,70 @@
+# 🏆 Couche Marts - Architecture en Étoile Multi-Faits (Gold Layer)
 
+Ce dossier représente la couche finale (Gold) de notre entrepôt de données. L'objectif de cette couche est de dénormaliser les entités de la couche Silver (3NF) pour les structurer selon la méthodologie de **Ralph Kimball (Modèle en Étoile)**. 
+
+Pour refléter au mieux la réalité d'un environnement d'entreprise, l'architecture a été complexifiée pour gérer un **modèle multi-faits** avec des **dimensions partagées (conformed dimensions)** et une dimension temporelle à **rôles multiples (Role-Playing Dimension)**.
+
+
+                             ┌──────────────────┐
+                             │   dim_customers  │
+                             └────────┬─────────┘
+                                      │
+                 ┌────────────────────┴────────────────────┐
+                 ▼                                         ▼
+        ┌──────────────┐                          ┌──────────────┐
+        │  fact_sales  │                          │fact_shipping │
+        └───────┬──────┘                          └───────┬──────┘
+                │                                         │
+                │           ┌────────────────┐            │ (Active: order_date)
+                ├──────────►│    dim_date    │◄───────────┤
+                │           └────────────────┘            │ (Inactive: shipping_date)
+                ▼                                         ▼
+        ┌──────────────┐                          ┌──────────────┐
+        │ dim_products │                          │ dim_products │
+        └──────────────┘                          └──────────────┘
+
+### 📈 1. Table de Faits : Performance Commerciale (`fact_sales`)
+* **Processus Métier :** Analyse des flux financiers, des volumes de vente et de la rentabilité.
+* **Grain :** La ligne de commande (`order_item_id`).
+* **Clés de Liaisons :** `customer_id`, `product_id`, `order_date_key`.
+* **Métriques Clefs :** Ventes brutes, remises, ventes nettes (`net_sales`), et marges bénéficiaires.
+
+### 🚚 2. Table de Faits : Performance Logistique (`fact_shipping`)
+* **Processus Métier :** Analyse de la Supply Chain, de l'efficacité des expéditions et des risques de retard.
+* **Grain :** La ligne d'expédition (`order_item_id`).
+* **Clés de Liaisons :** `customer_id`, `product_id`, `order_date_key`, `shipping_date_key`.
+* **Métriques Clefs :** Jours de livraison réels vs planifiés, risque de retard (`late_delivery_risk`), statut de livraison, et calcul de l'écart d'expédition (`shipping_delay_days`).
+
+---
+
+## 🗓️ Focus Technique : La Dimension Temporelle & Rôles Multiples
+
+### Génération Dynamique (`dim_date`)
+La table `dim_date` est générée dynamiquement directement dans PostgreSQL via une série temporelle couvrant la période 2015-2025. Elle enrichit le calendrier avec des attributs analytiques (`calendar_year`, `month_name`, `calendar_quarter`, `day_of_week_name`, `is_weekend`).
+
+### Gestion des Relations Actives vs Inactives (*Role-Playing*)
+Le processus logistique (`fact_shipping`) interagit avec le calendrier à travers deux concepts :
+1. **`order_date_key` (Relation Active) :** Le chemin par défaut utilisé par l'outil de BI pour filtrer les performances selon la date d'achat.
+2. **`shipping_date_key` (Relation Inactive) :** Une relation sous-jacente (ligne pointillée). Pour analyser les volumes réels d'expéditions physiques, la relation sera explicitement activée en DAX dans Power BI via la fonction :
+   `USERELATIONSHIP(dim_date[date_key], fact_shipping[shipping_date_key])`
+
+---
+
+## 🗃️ Dimensions Partagées & Dénormalisation
+
+* **`dim_products` :** Fusionne (dénormalise) l'entité produit avec ses catégories et ses départements parents. Cela élimine le besoin de jointures en cascade (Flocon) dans l'outil de BI, maximisant ainsi les performances de calcul de Power BI.
+* **`dim_customers` :** Projette le profil propre et géolocalisé des clients.
+
+---
+
+## 🛠️ Configuration dbt (`dbt_project.yml`)
+
+Tous les modèles de cette couche sont configurés avec la stratégie de matérialisation **`table`**. Les tables sont physiquement écrites et indexées dans la base de données de production pour garantir des temps de réponse instantanés lors des rafraîchissements des rapports décisionnels.
+---
+
+## 🗺️ Architecture du Modèle de Données
+
+Plutôt que d'avoir une seule table lourde, la donnée est segmentée pour isoler deux processus métiers distincts qui partagent le même référentiel :
 
 Nous allons concevoir deux tables de faits qui vont coexister dans ta couche Gold / Marts et qui partageront les mêmes dimensions :
 
