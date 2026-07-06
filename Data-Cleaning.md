@@ -8,7 +8,7 @@ DBeaver import data as ISO-8859-1 or Windows-1252 (not utf-8) to handle accents
 
 - **Customer Email** : Anonymized and Unsuable (e.g. XXXXXXX) --> Remove Column
 - **Customer Password** : Anonymized and Unsuable (e.g. XXXXXXX) --> Remove Column
-- **Customer State** : Mainly US (CA, MI, NY) but few values with Numbers (e.g. 91732, 95758)
+- <s>**Customer State** : Mainly US (CA, MI, NY) but few values with Numbers (e.g. 91732, 95758)</s>
 - **Customer Lname** : Some Missing Values --> How to handle
 - **Customer Zip Code** : Some Missing Values --> How to handle
 - **order date (DateOrders)** : Different Timestamp Formatting with mm/dd/yyyy, yyyy/mm/dd
