@@ -39,6 +39,49 @@ Pour le décalage des 3 lignes : On va utiliser un CASE WHEN en repérant ces li
 
 ## Data Cleaning
 
+# 📂 Couche Staging - Nettoyage et Standardisation des Données (Bronze Layer)
+
+Ce dossier contient la première étape de transformation de notre pipeline dbt. L'objectif de cette couche est de prendre les données brutes du schéma `raw`, de les nettoyer, de corriger les anomalies structurelles, et de préparer une fondation saine (1NF) avant d'entamer la normalisation en 3NF (Silver Layer).
+
+---
+
+## 🛠️ Actions de Nettoyage Réalisées
+
+### 1. Normalisation Automatique des En-têtes (Automation Engine)
+Le dataset d'origine comporte plus de 50 colonnes avec des syntaxes hétérogènes (espaces, majuscules, parenthèses). 
+* **Action :** Utilisation d'une boucle dynamique **Jinja** combinée aux macros d'adaptation dbt pour renommer automatiquement l'intégralité des colonnes en `lowercase` et `snake_case` (ex: `Days for shipping (real)` ➔ `days_for_shipping_real`).
+
+### 2. Redressement des Anomalies de Cascade (Data Alignment)
+* **Problème :** Identification de 3 lignes corrompues dans le fichier source où les données géographiques ont glissé d'une colonne vers la droite (la ville contenait l'état `"CA"`, l'état contenait le code postal, etc.).
+* **Règle métier :** Alignement chirurgical via un bloc `CASE WHEN` basé sur la condition `customer_city = 'CA'`. Les données ont été glissées vers leurs vraies colonnes respectives et la ville d'origine a été passée à `'unknown'`.
+
+### 3. Gestion des Valeurs Manquantes & Concaténation (Data Integrity)
+* **Règle Nom Client :** Fusion des colonnes `customer_fname` et `customer_lname`. Pour éviter les chaînes coupées ou les espaces vides dus aux noms de famille manquants (chaînes vides `''`), une sécurité `COALESCE` remplace le nom absent par `'UNKNOWN'` (ex: `"John UNKNOWN"`).
+* **Règle Types Postgres :** Forçage des types de codes postaux (`customer_zipcode`) en `VARCHAR` pour préserver l'intégrité des données (éviter la perte des zéros non significatifs au début des codes postaux).
+
+### 4. Harmonisation des Formats de Dates (Temporal Consistency)
+* **Problème :** Les colonnes de dates (`order_date` et `shipping_date`) étaient stockées en chaînes de caractères (`VARCHAR`) avec des formats américains (`MM/DD/YYYY`) et standards (`YYYY-MM-DD`) mélangés.
+* **Action :** Application de fonctions de parsing conditionnel (`LIKE` + `to_date`) pour garantir une conversion propre vers le type de données `DATE` de PostgreSQL sans générer d'erreurs d'exécution.
+
+---
+
+## 📊 Modèles dbt de cette Couche
+
+| Modèle SQL | Type d'Objet Postgres | Description |
+| :--- | :--- | :--- |
+| `stg_dataco_supply_chain_v2` | **Vue (View)** | Modèle unique consolidé appliquant le renommage automatique Jinja et l'ensemble des 4 règles de nettoyage spécifiques. |
+
+---
+
+## 🧪 Tests de Qualité (Data Quality)
+
+Pour certifier la conformité de notre nettoyage, des tests d'entrée ont été configurés dans le fichier `schema.yml` :
+* **`not_null`** sur `customer_id` : S'assure qu'aucun enregistrement ne manque d'identifiant client.
+* **`not_null`** sur `order_date` & `shipping_date` : Valide le succès du parsing de toutes les dates du dataset.
+
+> **Statut actuel des tests :** `PASSED` 🟩
+
+
 Stratégie de Nettoyage (Colonne par Colonne)
 1. Les colonnes à supprimer d'office (DROP)
 
@@ -57,14 +100,6 @@ Stratégie de Nettoyage (Colonne par Colonne)
     order_date_dateorders & shipping_date_dateorders
 
     Best Practice : PostgreSQL dispose d'une fonction très puissante, TO_TIMESTAMP() ou CAST(... AS TIMESTAMP). Cependant, si tes chaînes mélangent nativement les formats mm/dd/yyyy et yyyy/mm/dd, PostgreSQL risque de lever une erreur de parsing. La méthode la plus robuste en SQL est d'utiliser un CASE WHEN combiné avec to_timestamp selon la structure détectée (ex: présence d'un tiret ou position des slashs).
-
-4. Les caractères corrompus (``)
-
-    order_state, order_country, order_city
-
-    Le problème : C'est un problème d'encodage (généralement du UTF-8 lu comme du ISO-8859-1).
-
-    Best Practice : On utilise la fonction REGEXP_REPLACE() de PostgreSQL dans dbt pour nettoyer ces caractères fantômes ou les remplacer par une chaîne vide.
 
 5. Les mélanges de données (Customer State : CA vs 91732)
 
