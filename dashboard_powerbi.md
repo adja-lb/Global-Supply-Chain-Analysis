@@ -37,3 +37,8 @@ Cet onglet s'adresse au Directeur Logistique.
         Graphique en secteurs (Donut) : Répartition des statuts de livraison (Closed, Pending, Suspected Fraud).
 
         Matrice de performance : Délai de livraison moyen par mode d'expédition (shipping_mode).
+
+
+Si tu utilises AVERAGE(fact_shipping[days_for_shipping_real]) sur un graphique par mois : Tu verras le délai moyen des commandes passées en janvier (même si elles ont été expédiées en février).
+
+Si tu utilises Avg Shipping Days (by Shipping Date) : Tu verras le délai moyen des commandes physiquement expédiées au mois de janvier.
