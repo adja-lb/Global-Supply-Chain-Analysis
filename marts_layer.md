@@ -84,5 +84,7 @@ Nous allons concevoir deux tables de faits qui vont coexister dans ta couche Gol
 
     dim_date (Dimension Temporelle) : Notre calendrier central unique pour analyser les deux processus selon les mêmes axes temporels (mois, trimestres, jours de la semaine).
 
-<img width="989" height="753" alt="Capture d&#39;écran 2026-07-07 221034" src="https://github.com/user-attachments/assets/34bbf75a-5749-498c-a053-51d742081b6f" />
+
+<img width="1051" height="745" alt="modele etoile pbi" src="https://github.com/user-attachments/assets/2a935e6a-61e5-4a99-a16e-2d2bd7f6d855" />
+
 
