@@ -83,3 +83,6 @@ Nous allons concevoir deux tables de faits qui vont coexister dans ta couche Gol
     fact_shipping (Processus Logistique) : Axé sur les flux de livraison, les risques de retard, les modes de transport et l'efficacité des expéditions.
 
     dim_date (Dimension Temporelle) : Notre calendrier central unique pour analyser les deux processus selon les mêmes axes temporels (mois, trimestres, jours de la semaine).
+
+<img width="989" height="753" alt="Capture d&#39;écran 2026-07-07 221034" src="https://github.com/user-attachments/assets/34bbf75a-5749-498c-a053-51d742081b6f" />
+
