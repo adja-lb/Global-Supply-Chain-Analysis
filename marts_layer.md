@@ -57,9 +57,19 @@ Le processus logistique (`fact_shipping`) interagit avec le calendrier à traver
 
 ---
 
-## 🛠️ Configuration dbt (`dbt_project.yml`)
+## 🏅 Module d'Analyse des Classements (Rankings Performance)
 
-Tous les modèles de cette couche sont configurés avec la stratégie de matérialisation **`table`**. Les tables sont physiquement écrites et indexées dans la base de données de production pour garantir des temps de réponse instantanés lors des rafraîchissements des rapports décisionnels.
+### Problématique Business
+Dans le cadre du pilotage de DataCo, l'identification rapide des segments leaders et des sous-performances est cruciale. Afin d'éviter de surcharger le modèle sémantique Power BI avec des calculs DAX itératifs lourds (générant des problèmes de performance sur de grands volumes), la logique de classement (*Rankings*) a été entièrement déportée en amont dans l'architecture de données (Medallion Architecture - Couche Gold/Marts) à l'aide de **dbt** et **SQL**.
+
+### Solution Technique (SQL & dbt)
+Création d'un modèle de données agrégé mensuel (`mart_sales_rankings.sql`) s'appuyant sur les fonctions analytiques de fenêtrage (`DENSE_RANK() OVER(...)`). 
+
+Le choix de `DENSE_RANK()` garantit une gestion stricte des ex-æquo (sans saut de rang dans le classement) et s'articule autour de trois axes analytiques :
+1. **Classement des Départements :** Performance globale inter-départements réinitialisée chaque mois.
+2. **Classement des Catégories :** Mix produit interne à *chaque* département pour identifier les spécificités locales.
+3. **Classement des Produits :** Top produits au sein de leur propre catégorie pour isoler les "Best Sellers".
+
 ---
 
 ## 🗺️ Architecture du Modèle de Données
